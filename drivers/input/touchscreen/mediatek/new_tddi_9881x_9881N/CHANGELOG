@@ -1,0 +1,205 @@
+V3.0.6.0
+[New features]
+1. 接收FW報點格式12bits或16bits為自動判斷
+2. 支援5A/5B CustomerType & FigType
+3. MTK平台上加入charger check的方式, 改用callback通知的方式
+4. support DEMO_HIGH_RESOLUTION_PACKET_ID(0x5B) in debug_message node
+5. proximity level功能
+
+[Improvements]
+1. position_high_resolution避免在ili_report_gesture_mode( )中頻繁allocate memory space
+2. MAX_HEX_FILE_SIZE限制為256K
+3. modify 5B header length in debug_message node
+4. modify ILITEK_IOCTL_ICE_MODE_SWITCH case of ioctl node
+5. ili_ice_mode_read函式中的rxbuf使用local配置空間
+6. Remove ic_sup_list check
+
+[Bug fixed]
+1.  position_high_resolution在demo_debug_info_mode的封包長度
+2.  MT_PRESSURE開啟時parsing data 位置
+3.  設定report rate register於reset前，避免進出ICE發生不預期錯誤
+4.  reinit_completion避免linux version太舊不支援
+5.  5A/5B FW低於1.4.7.0設定錯誤讀取長度
+6.  IC_CODE_RESET的狀況下會在ICE MODE內下DUMMY CMD
+7.  Reset後不需下demo mode cmd (0xFA, 0x00)
+8.  ili_set_tp_data_len() error, 'cmd' equal to a null pointer is always false
+9.  ili_fw_read_hw_crc function return type modify to int
+10. 避免解析hex(ili)錯誤，在下次fw upgrade時拿到錯誤的資料
+
+V3.0.5.0
+[New features]
+1.  加入9883A公式(Open C、Short)
+2.  加入ENGINEER_FLOW, 移除舊MP All Pass流程
+3.  iotcl node send trans_xy info to APK
+4.  加入流程，傳輸Command時屏蔽報點封包
+5.  加入I2C介面 Gesture下密碼流程
+6.  新增SRAM TEST節點
+7.  加入MP apk lcm off case node
+8.  加入Axis & Palm flag Patch
+9.  Report rate set & get加入compat節點
+10. PROXIMITY_BY_FW_MODE選擇，分為兩種功能PROXIMITY_SUSPEND_RESUME與PROXIMITY_BACKLIGHT
+11. 接收FW報點格式為12bits或16bits，開關 POSITION_HIGH_RESOLUTION
+
+[Improvements]
+1.  7807V公式(Open C、Short)，9882N、9882H公式(Short)
+2.  ilitek_tddi_fw_ili_convert的block計算有越界
+3.  加載驅動中斷註冊後剛好有來中斷觸發ESD，然後會load code，但probe流程內的load code在此過程中也會運行（因為probe裡的load code是沒有加鎖互斥的），導致流程交叉，可能會出現dump死機問題
+4.  code內有在持鎖的情況下去關閉延時工作隊列的情況(例如中斷流程和休眠喚醒流程內關閉esd check)，有機率造成死鎖
+5.  Read Chip ID無效操作
+6.  func_ctrl_reset前需要Delay 10ms，避免Code reset後太快補下
+7.  KERNEL_DS取代get_ds
+8.  Kernel 5.4 API修改
+9.  Hostdownload完統一Delay 20ms
+10. ARRAY_SIZE取代sizeod
+11. SPI_SPLIT優化
+12. 修改I2C Reset後Delay時間 100ms 改為 40ms
+13. 客戶提交code報錯
+14. ice read register長度不同可能會造成判斷有誤
+15. 檢查code是否該做bit control沒做
+16. probe失敗需要釋放申請的資源
+17. 驗證7807S MP (主要為short test 與open C 公式修改)
+18. 透過SPI_DMA_TRANSFER_SPLIT定義SPI_UPGRADE_LEN大小
+19. hostdownload下，ilitek_tdd_fw_hex_open()開檔案後沒有free
+
+[Bug fixed]
+1.  開啟RESUME_BY_DDI時誤下dummy cmd
+2.  gesture mode下數據越界風險
+3.  proximity在發生gesture recovery時重複下cmd
+4.  ili_spi_pll_clk_wakeup內存問題(memcpy)
+5.  當SPI使用不分割的方式時，進行dumpiram操作，如echo dumpiramdata,0x00,0x13fff > /proc/ilitek/ioctl，會因為在準備讀取的4096長度上加了寫83對應1byte的長度導致被擋，無法讀取數據，建議將讀取時原來一次讀4K的減少為3K(即截圖內的limit 等於SPI_RX_BUF_SIZE - K)
+6.  irq_stat 初始異常，造成概率性第一次亮屏會spi_recovory
+7.  wlen先加index，然後在copy data，會導致txbuf越界，將加index動作移到copy data後
+8.  resume時tp_suspend下的時機點
+9.  開機升級有比版本的話，會因為沒有讀版本而每次開機都升級
+10. debug_mutex應改用debug_read_mutex，否則當開啟讀debug_message info時，若進入到3秒等待int報data的時候，有關閉debug功能時會去free相關buf，但之前已經進入的3秒等待那裡就會有crash問題
+
+v3.0.4.0
+[New features]
+1.  v3.0版本檔案名稱更改為ilitek_v3為開頭
+2.  加入KNUCKLE功能
+3.  由Driver以整個結構的方式修改Edge palm範圍參數 for Driver
+4.  新增suspend與resume下cmd方式，定義開關為PROXIMITY_BY_FW
+
+[Improvements]
+1.  spi接口default不使用分割的方式
+2.  HW SA需要統計MP各單一測項時間，在所有測項結束後加一句log打印，方便統計
+3.  I2C模式，Default關閉開機升級功能
+4.  休眠?直接使用TP_DEEP_SLEEP
+5.  TPD_WIDTH 和 TPD_HEIGHT增加註解，說明不要更改，避免有客戶誤會這裡是設定分辨率去改這裡
+6.  idev->tp_sw_mode此原子變數在開機時atomic_set初始化
+7.  使用ICE Mode函式加入停MCU的選擇
+8.  修改dma reset位置，統一加入到calc_hw_dma_crc內
+
+[Bug fixed]
+1.  修正?醒使用ilitek_resume_by_ddi時，WQ_ESD & WQ_BAT DISABLE後不會再ENABLE
+2.  ili_spi_wrapper 中的 wdata 的大小不足，會造成cmd超過定義長度就不夠用
+3.  修正避免在falsh搬code時進出ICE MODE的錯誤
+4.  apk針對compart ioctl寫法問題
+5.  呼叫get_debug_mode_data此節點後，資料無法保存，file->flen應該改為file->wlen
+6.  ilitek_debug_node_buff_control此函?第一次呼叫時若帶參數是disable，會因為沒有判斷是否為NULL，導致crash
+7.  I2C模式下，若比較fbi[DDI].start或fbi[DDI].end return的話就不會去讀版本號，當開機升級有比較版本的話，會因為沒有讀版本號而每次開機都升級
+8.  open_para、short_para兩個變數宣告為static，避免一起編譯會有多重定義的錯誤
+9.  ili_ic_get_fw_ver Function中，修正沒判斷 < 0的邏輯錯誤
+10. 修正打ESD無觸後recovery邏輯
+11. 修正AP下debug轉demo時不拉reset，並設定封包長度
+12. ili_update_tp_module_info?TM模?的md_fw_filp_path設定有誤
+13. 修正calc_hw_dma_crc( ) DMA Stop設定
+14. 修改tp_suspend flag setup時機點，避免dummy cmd無法預期喚醒PLL
+15. ioctl node ILITEK_IOCTL_TP_MODE_STATUS 回傳的值與APK的對應值不相符
+
+v3.0.3.0
+[New features]
+1. 暗屏下當透過SPI做寫入動作時，FW會關閉PLL CLK，因此先下dummy CMD來喚醒SPI PLL CLK
+2. check FW interface(SPI/I2C) can be fw upgrade or not
+3. add MP backdoor mode, when FW is turned on, MP can be fully PASS
+4. 新增展訊平台利用節點的方式調用休眠喚醒流程
+5. charger check的方式, 改用callback通知的方式
+
+[Improvements]
+1. HexToDec()， 異常情況下返回值-1.使用接口時，需要先判斷返回值
+2. ilitek_node_ioctl_write add error memory checking
+3. First check hw_crc is correct or not in ilitek_tddi_fw_check_hex_hw_crc
+4. modify retry time in ilitek_tddi_flash_read_int_flag/ilitek_fw_read_hw_crc/ilitek_touch_esd_gesture_iram/ilitek_tddi_touch_esd_gesture_flash/
+5. MP Open & Short參數, 若新IC(9882F\7807V\9882H\9882N)讀取不到Cbk_Step, Cint, open & short 測試直接Return不進行測試
+6. ili_ice_mode_ctrl進出ice mode時，需依照wrapper回傳狀態來設置atomic ice_stat
+7. 只有esd_recovery的地方讀pc counter時停MCU，其餘地方讀pc counter皆不停MCU
+
+[Bug fixed]
+1. modify ic func ctrl reset function
+2. probe時讀chip id後, check support時若chip id不在list中也不該回傳-1
+3. modify wrong flow of touch_mutex lock in ili_gesture_recovery
+4. ili_mp_test_main()，ilitek_ini_file_data vmalloc前先判空，非空不要申請內存，防止接口重複調用，形成內存洩露。
+5. mp_test_data_sort_average()， u32sum_raw_data 申請內存失敗，需要把已申請的u32data_buff釋放
+6. 修正7807S Open公式
+7. I2C added 補下機制esd wdt rst /judged fw_latch/resume rese/gesture_symbol
+8. MP Peak to Peak parser mp ini header error
+
+v3.0.2.0
+[New features]
+1. Add Delta C noise (noise peak to peak 3 frame case)
+2. Register pm suspend/resume in dev_pm_ops
+3. Gesture 增加手勢開關
+4. 增加debug lite格式，加速get frame rate
+5. short test 與open C 公式修改
+6. 為整機打ESD需求,暫時加入支援9882系列IC
+7. 計算HW CRC, 必須在Load Code前下DMA Reset(only 9881X)
+8. 需要統一規定reset後10ms才能進入ICE[9882H/82N/81T/83A/7807V]
+9. 修改寫Dummy是否成功來判斷是否註冊Probe成功
+10. add judgment method in node returns core version to apk
+11. modify mp fail retry method
+12. add ilitek_tddi_ic_func_ctrl_reset case
+13. cmd's definition of AP and MP interruption time out needs to be different
+14. modify ili_touch_esd_gesture_iram()，add retry check case when enter ICE mode
+15. Modify 9882H / 9882N / 7807V MP Open & Short formula
+
+[Improvements]
+1. 因為MP APK，修改ioctl node中的ICE_MODE_SWITCH
+2. change polling PM status method to wait_for_completion_timeout
+3. 修正Load Gesture Code流程
+4. modify FW_TDDI_TRUNK_FB.ili path
+5. spi_sync fail no need to recovery
+6. set default gesture disable
+7. set default SPI clock 8M HZ
+8. Change variable xfer from global to local in ili_spi_write_then_read_split
+9. Modify the method of declaring variables in open_test_sp and open_test_cap
+10. modify TP_RECORD_DATA define
+11. modify struct ili_demo_debug_info_id0 for oplus
+12. The space allocation of the two-dimensional index in the code is incorrect
+13. remove gpio_request INT/RST in MTK platform
+14. SPI開機升級判斷不要只用開機升級的宏開關來控制
+15. modify mp ini parser read file size method
+16. ic_get_info時僅打印CHIP PID前六碼，取消顯示IC version
+
+[Bug fixed]
+1. WRAPPER_RW case buffer length in ioctl node
+2. PC tool read the format of mp csv file
+3. ili_spi_write_then_read_split read error length
+4. Interrupts are not enabled after upgrading firmware using DDI
+5. ESD 密碼位置修改
+6. SPI/I2C UART資料長度錯誤
+7. Host down load 搬code，code 長度不滿足4 alignment, 補0xFF 防呆 (Gesture code 有機會不滿足4 alignment) , 以及確認燒入iram正確性 , CRC 檢查修正
+8. ili_fw_uart_ctrl() u8不會<0
+9. 9881x reset key
+10. 9881X/7807Q/9882H不需要 otp_check 流程防護
+11. 9881X 後的IC, 進ICE不需設定WDT
+12. 在讀取Flash前必須將RX_DUAL關掉
+13. 在進ICE Mode設定CS 為High, 防止Load Code被中斷時, CS Keep 在Low的 Issue(I2C)
+14. ili_ic_get_pc_counter是使用停MCU的，請改成不停MCU的
+15. remove (n_tx > SPI_TX_BUF_SIZE) judgment in ilitek_spi_write_then_read_split/ilitek_spi_write_then_read_direct
+16. set iram_crc initial value in ilitek_tddi_fw_iram_upgrade
+17. fix mp_do_retry only retry once
+18. show_delta_data and show_raw_data of node case(cmd B7 01/02) SPI slave read no wait interrupt
+19. Modify the timing of mutex use in spi esd recovery flow
+20. Fix the data space of show delta & show rawdata is incorrectly written
+21. cat /proc/ilitek/debug_message will reboot when debug_message is close
+22. pre-command does not need to check interrupt
+
+v3.0.1.0
+[New features]
+1. Supports ILI9881N series IC.
+2. Supports 64K and 80K iram program.
+3. Support IC's SPI slave.
+
+[Improvements]
+
+[Bug fixed]

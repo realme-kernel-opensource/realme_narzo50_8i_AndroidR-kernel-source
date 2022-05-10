@@ -1,0 +1,13 @@
+&i2c2 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <400000>;
+	i2c_camera_ldo@29{
+		compatible = "mediatek,i2c_camera_ldo";
+		reg = <0x29>;
+		status = "okay";
+	};
+};
+
+
+

@@ -1,0 +1,40 @@
+#ifdef OPLUS_FEATURE_TP_BASIC
+config OPLUS_ARCH_FILE
+    bool "for build directory oplus"
+    ---help---
+    say Y to buid in
+
+#ifdef OPLUS_FEATURE_NFC_CONSOFT
+config OPLUS_NFC
+  bool "config oplus nfc chipset"
+  select OPLUS_ARCH_FILE
+  help
+	define this config to get nfc chipset version from dts.
+#endif /* OPLUS_FEATURE_NFC_CONSOFT
+
+#source "drivers/soc/oplus/oplus/oplus_als_cali_value/Kconfig"
+#source "drivers/soc/oplus/oplus/oplus_hypnus/Kconfig"
+#//Wen.Luo@BSP
+#Liang.Zhang@TECH.Storage.Stability.OPLUS_SHUTDOWN_DETECT, 2019/04/28, Add for shutdown detect
+#source "drivers/soc/oplus/oplus/oplus_shutdown_detect/Kconfig"
+
+#Kun.Hu@TECH.BSP.Stability.PHOENIX_PROJECT 2019/06/15, Add for PHOENIX_PROJECT
+#source "drivers/soc/oplus/oplus/oplus_phoenix/Kconfig"
+#endif /* OPLUS_FEATURE_TP_BASIC */
+
+#source "drivers/soc/oplus/oplus/oplus_key_handle/Kconfig"
+
+#ifdef OPLUS_FEATURE_NFC_CONSOFT
+
+#endif /* OPLUS_FEATURE_NFC_CONSOFT */
+#ifdef OPLUS_FEATURE_SENSOR_SMEM
+source "drivers/soc/oplus/oplus/oplus_als_cali_value/Kconfig"
+#endif /*OPLUS_FEATURE_SENSOR_SMEM */
+
+#ifdef OPLUS_FEATURE_MEMLEAK_DETECT
+#Hailong.Liu@BSP.MM 2019/03/18, Add for svelte
+#source "drivers/soc/oplus/oplus/oplus_svelte/Kconfig"
+#endif /* OPLUS_FEATURE_MEMLEAK_DETECT */
+
+#source "drivers/soc/oplus/oplus/oplus_wakelock_profiler/Kconfig"
+
